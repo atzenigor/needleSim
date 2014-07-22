@@ -38,6 +38,8 @@
 **
 ****************************************************************************/
 
+// commento di prova
+
 #ifndef WINDOW_H
 #define WINDOW_H
 
@@ -52,6 +54,7 @@ class GLWidget;
 class Window : public QWidget
 {
     Q_OBJECT
+
 
 public:
     Window();
