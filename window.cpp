@@ -71,7 +71,7 @@ Window::Window()
     xSlider->setValue(15 * 16);
     ySlider->setValue(345 * 16);
     zSlider->setValue(0 * 16);
-    setWindowTitle(tr("Hello GL"));
+    setWindowTitle(tr("NeedleSim"));
 }
 //! [1]
 

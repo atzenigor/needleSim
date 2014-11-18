@@ -1,10 +1,16 @@
 SOURCES += \
     window.cpp \
     glwidget.cpp \
-    main.cpp
+    main.cpp \
+    needletree.cpp \
+    obstacle.cpp \
+    needlerrt.cpp
 
 HEADERS += \
     window.h \
-    glwidget.h
+    glwidget.h \
+    needletree.h \
+    obstacle.h \
+    needlerrt.h
 
 QT           += opengl widgets
