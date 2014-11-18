@@ -20,35 +20,37 @@ private:
   u& param_;
 
 public:
-  NEdge(NVertex& source,NVertex& dest, u& param);
+  NEdge(NVertex& source, NVertex& dest, u &param);
   NVertex& getSource();
   NVertex& getDest();
-  u& getParam();
+  u getParam();
 };
 
 class NVertex {
 private:
-  NEdge& parent_;
-  Eigen::Dense& g_; // 4x4 transformation matrix
-  Eigen::Vector3d position_;
+  NEdge * parent_;
+  Eigen::Matrix4d g_; // 4x4 transformation matrix
+  Eigen::Vector4d position_;
 
 public:
-  NVertex(NEdge& parent, Eigen::Dense& g);
+  NVertex(NEdge * parent, const Eigen::Matrix4d &g, const Eigen::Vector4d &position);
   NEdge& getParent();
-  Eigen::Dense& getPosition();
-
+  Eigen::Matrix4d& getTransMatrix();
+  Eigen::Vector4d& getPosition();
 };
 
 
 class NeedleTree{
+private:
+  std::vector<NVertex> listOfVertex;
+  std::vector<NEdge> listOfEdges;
+  NVertex initVertex_;
+
 public:
   NeedleTree();
   void addNVertex(NVertex& v);
   void addNEdge(NEdge& e);
-private:
-  NEdge initEdge;
-  std::vector<NVertex> listOfVertex;
-  std::vector<NEdge> listOfEdges;
+
 };
 
 
