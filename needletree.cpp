@@ -1,30 +1,20 @@
 #include "needletree.h"
 
-NEdge::NEdge(NVertex& source, NVertex& dest, u &param):
-  source_(source),
-  dest_(dest),
-  param_(param)
-{}
 
-NVertex& NEdge::getSource(){
-  return source_;
+NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, const Eigen::Vector4d& position, uParam& param):
+  parent_(parent),
+  g_(g),
+  position_(position),
+  param_(param){
 }
 
-NVertex& NEdge::getDest(){
-  return dest_;
-}
-u NEdge::getParam(){
+
+uParam& NVertex::getParam(){
   return param_;
 }
 
-NVertex::NVertex(NEdge* parent, const Eigen::Matrix4d& g, const Eigen::Vector4d& position):
-  parent_(parent),
-  g_(g),
-  position_(position)
-{}
-
-NEdge& NVertex::getParent(){
-  return *parent_;
+NVertex *NVertex::getParent(){
+  return parent_;
 }
 
 Eigen::Vector4d& NVertex::getPosition(){
@@ -36,10 +26,15 @@ Eigen::Matrix4d& NVertex::getTransMatrix(){
 }
 
 NeedleTree::NeedleTree():
-  listOfVertex(),
-  listOfEdges(),
-  initVertex_(NULL,Eigen::Matrix<double, 4, 4>::Identity(),Eigen::Matrix<double, 4, 1>::Identity().reverse())
-{
+  listOfVertex_(){
+  uParam a;
+  initVertex_ = new NVertex(NULL,Eigen::Matrix4d::Identity(),Eigen::Vector4d::Identity().reverse(),a);
+  this->addNVertex(initVertex_);
+}
+NeedleTree::~NeedleTree(){
+  this->listOfVertex_.clear();
+}
 
-
+void NeedleTree::addNVertex(NVertex* v){
+  listOfVertex_.push_back(v);
 }

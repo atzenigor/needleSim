@@ -1,15 +1,22 @@
 #ifndef NEEDLERRT_H
 #define NEEDLERRT_H
+#include "needletree.h"
+#include "eigen3/Eigen/Dense"
 
-class Needleerrt{
+class Needlerrt{
 private:
   NeedleTree tree;
+  bool finished;
+
 public:
-  Needleerrt
-  {
+  static void randomFill(Eigen::Vector4d& v); //should be private
+  Needlerrt();
+  void makeStep();
+  bool isFinished();
+  void insertObstacle();
+  void getPath();
+  void getTree();
 
-
-  }
 };
 
 
