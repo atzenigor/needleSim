@@ -49,6 +49,8 @@
 #define GL_MULTISAMPLE  0x809D
 #endif
 
+int i=0;
+
 //! [0]
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
@@ -60,6 +62,10 @@ GLWidget::GLWidget(QWidget *parent)
 
     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(updateEdges()));
+    timer->start(400);
 }
 //! [0]
 
@@ -146,10 +152,56 @@ void GLWidget::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
+
     glTranslatef(0.0, 0.0, -10.0);
     glRotatef(xRot / 16.0, 1.0, 0.0, 0.0);
     glRotatef(yRot / 16.0, 0.0, 1.0, 0.0);
     glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
+
+        glBegin(GL_LINES);
+
+                      glColor3f(1.0f,1.0f,0.0f);
+                    for (int j = 0; j <= i; j++){
+                      glVertex3f( 0.0f + (double)j/10, 0.0f + (double)j/10, 0.0f + (double)j/10);
+                      glVertex3f( 0.1f + (double)j/10, 0.1f + (double)j/10, 0.1f + (double)j/10);
+                    }
+
+        glEnd();
+
+        glColor3f(1.0f,1.0f,0.0f);
+        glBegin(GL_QUADS);
+            glNormal3f(0,0,-0.2);
+            glVertex3f(-0.2,-0.2,0);
+            glVertex3f(-0.2,0.2,0);
+            glVertex3f(0.2,0.2,0);
+            glVertex3f(0.2,-0.2,0);
+
+        glEnd();
+        glBegin(GL_TRIANGLES);
+            glNormal3f(0,-0.2,0.1414);
+            glVertex3f(-0.2,-0.2,0);
+            glVertex3f(0.2,-0.2,0);
+            glVertex3f(0,0,0.24);
+        glEnd();
+        glBegin(GL_TRIANGLES);
+            glNormal3f(0.2,0, 0.1414);
+            glVertex3f(0.2,-0.2,0);
+            glVertex3f(0.2,0.2,0);
+            glVertex3f(0,0,0.24);
+        glEnd();
+        glBegin(GL_TRIANGLES);
+            glNormal3f(0,0.2,0.1414);
+            glVertex3f(0.2,0.2,0);
+            glVertex3f(-0.2,0.2,0);
+            glVertex3f(0,0,0.24);
+        glEnd();
+        glBegin(GL_TRIANGLES);
+            glNormal3f(-0.2,0,0.1414);
+            glVertex3f(-0.2,0.2,0);
+            glVertex3f(-0.2,-0.2,0);
+            glVertex3f(0,0,0.24);
+        glEnd();
+
 
 }
 //! [7]
@@ -193,4 +245,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     }
     lastPos = event->pos();
 }
+
+void GLWidget::updateEdges()
+{
+    if (i <= 2)i++;
+    updateGL();
+}
+
 //! [10]

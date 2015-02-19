@@ -1,15 +1,14 @@
 #include "needletree.h"
 
 
-NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, const Eigen::Vector4d& position, uParam& param):
+NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, UParam& param):
   parent_(parent),
   g_(g),
-  position_(position),
+  g_inv_(g.inverse()),
   param_(param){
 }
 
-
-uParam& NVertex::getParam(){
+const UParam NVertex::getParam(){
   return param_;
 }
 
@@ -17,24 +16,32 @@ NVertex *NVertex::getParent(){
   return parent_;
 }
 
-Eigen::Vector4d& NVertex::getPosition(){
-  return position_;
+const Eigen::Vector4d& NVertex::getPosition(){
+  return g_.col(3);
 }
 
-Eigen::Matrix4d& NVertex::getTransMatrix(){
+const Eigen::Matrix4d& NVertex::getTransMatrix(){
   return g_;
 }
 
+const Eigen::Matrix4d& NVertex::getInvTransMatrix(){
+  return g_inv_;
+}
+
 NeedleTree::NeedleTree():
-  listOfVertex_(){
-  uParam a;
-  initVertex_ = new NVertex(NULL,Eigen::Matrix4d::Identity(),Eigen::Vector4d::Identity().reverse(),a);
-  this->addNVertex(initVertex_);
+  list_of_vertex_(){
+  UParam a;
+  first_vertex_ = new NVertex(NULL,Eigen::Matrix4d::Identity(),a);
+  this->addNVertex(first_vertex_);
 }
 NeedleTree::~NeedleTree(){
-  this->listOfVertex_.clear();
+  this->list_of_vertex_.clear();
 }
 
 void NeedleTree::addNVertex(NVertex* v){
-  listOfVertex_.push_back(v);
+  list_of_vertex_.push_back(v);
+}
+
+std::vector<NVertex*>& NeedleTree::getListOfVertex(){
+  return list_of_vertex_;
 }

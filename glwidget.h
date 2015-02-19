@@ -43,6 +43,9 @@
 
 #include <QGLWidget>
 
+#include <QWidget>
+#include <QtGui>
+
 class QtLogo;
 
 //! [0]
@@ -63,6 +66,7 @@ public slots:
     void setXRotation(int angle);
     void setYRotation(int angle);
     void setZRotation(int angle);
+    void updateEdges();
 
 signals:
     void xRotationChanged(int angle);
@@ -89,6 +93,7 @@ private:
     QColor qtGreen;
     QColor qtPurple;
 };
+
 //! [3]
 
 #endif

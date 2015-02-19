@@ -7,35 +7,40 @@
 class NEdge;
 class NVertex;
 
-struct uParam {
+struct UParam {
   double l;
   double r;
   double theta;
 };
 
+
+//It is a vertex of the tree. It contains the parameter of its edge with its parent.
 class NVertex {
 private:
   NVertex * parent_;
-  Eigen::Matrix4d g_; // 4x4 transformation matrix
-  Eigen::Vector4d position_;
-  uParam param_;  // the parameter of the arc from here to the parent.
+  const Eigen::Matrix4d g_; // 4x4 transformation matrix
+  const Eigen::Matrix4d g_inv_;
+  const UParam param_;  // the parameter of the arc from here to the parent.
 
 public:
-  NVertex(NVertex * parent, const Eigen::Matrix4d &g, const Eigen::Vector4d &position, uParam& param);
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  NVertex(NVertex * parent, const Eigen::Matrix4d &g, UParam& param);
   NVertex * getParent();
-  Eigen::Matrix4d& getTransMatrix();
-  Eigen::Vector4d& getPosition();
-  uParam& getParam();
+  const Eigen::Matrix4d &getTransMatrix();
+  const Eigen::Matrix4d &getInvTransMatrix();
+  const Eigen::Vector4d &getPosition();
+  const UParam getParam();
 };
 
 class NeedleTree{
 private:
-  NVertex* initVertex_;
-  std::vector<NVertex*> listOfVertex_;
+  NVertex* first_vertex_;
+  std::vector<NVertex*> list_of_vertex_;
 public:
   NeedleTree();
   ~NeedleTree();
   void addNVertex(NVertex *v);
+  std::vector<NVertex*>& getListOfVertex();
 };
 
 
