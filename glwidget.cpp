@@ -41,7 +41,6 @@
 #include <QtWidgets>
 #include <QtOpenGL>
 
-#include <math.h>
 
 #include "glwidget.h"
 
@@ -159,50 +158,17 @@ void GLWidget::paintGL()
     glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
 
         glBegin(GL_LINES);
-
-                      glColor3f(1.0f,1.0f,0.0f);
-                    for (int j = 0; j <= i; j++){
-                      glVertex3f( 0.0f + (double)j/10, 0.0f + (double)j/10, 0.0f + (double)j/10);
-                      glVertex3f( 0.1f + (double)j/10, 0.1f + (double)j/10, 0.1f + (double)j/10);
-                    }
-
+            glColor3f(1.0f,1.0f,0.0f);
+                std::vector<NVertex*>& verteces = this->needlerrt.getNeedleTree().getListOfVertex();
+                for (int j = 0; j < i; j++){
+                  const Eigen::Vector4d& v1 = verteces[j]->getTransMatrix().col(3);
+                  const Eigen::Vector4d& v2 = verteces[j+1]->getTransMatrix().col(3);
+                  std::cout << "v1 "<<j<< "\n"<< v1 << std::endl;
+                  std::cout << "v2 "<<j<<"\n" << v2 << std::endl;
+                  glVertex3f(v1[0], v1[1], v1[2]);
+                  glVertex3f(v2[0], v2[1], v2[2]);
+                }
         glEnd();
-
-        glColor3f(1.0f,1.0f,0.0f);
-        glBegin(GL_QUADS);
-            glNormal3f(0,0,-0.2);
-            glVertex3f(-0.2,-0.2,0);
-            glVertex3f(-0.2,0.2,0);
-            glVertex3f(0.2,0.2,0);
-            glVertex3f(0.2,-0.2,0);
-
-        glEnd();
-        glBegin(GL_TRIANGLES);
-            glNormal3f(0,-0.2,0.1414);
-            glVertex3f(-0.2,-0.2,0);
-            glVertex3f(0.2,-0.2,0);
-            glVertex3f(0,0,0.24);
-        glEnd();
-        glBegin(GL_TRIANGLES);
-            glNormal3f(0.2,0, 0.1414);
-            glVertex3f(0.2,-0.2,0);
-            glVertex3f(0.2,0.2,0);
-            glVertex3f(0,0,0.24);
-        glEnd();
-        glBegin(GL_TRIANGLES);
-            glNormal3f(0,0.2,0.1414);
-            glVertex3f(0.2,0.2,0);
-            glVertex3f(-0.2,0.2,0);
-            glVertex3f(0,0,0.24);
-        glEnd();
-        glBegin(GL_TRIANGLES);
-            glNormal3f(-0.2,0,0.1414);
-            glVertex3f(-0.2,0.2,0);
-            glVertex3f(-0.2,-0.2,0);
-            glVertex3f(0,0,0.24);
-        glEnd();
-
-
 }
 //! [7]
 
@@ -248,7 +214,10 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::updateEdges()
 {
-    if (i <= 2)i++;
+    if (i <= 5){
+        this->needlerrt.makeStep();
+        i++;
+    }
     updateGL();
 }
 

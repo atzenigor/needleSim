@@ -45,7 +45,9 @@
 
 #include <QWidget>
 #include <QtGui>
-
+#include <math.h>
+#include <iostream>
+#include <needlerrt.h>
 class QtLogo;
 
 //! [0]
@@ -92,6 +94,9 @@ private:
     QPoint lastPos;
     QColor qtGreen;
     QColor qtPurple;
+
+    Needlerrt needlerrt;
+
 };
 
 //! [3]

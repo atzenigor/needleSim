@@ -1,6 +1,7 @@
 #include "needletree.h"
+#include "iostream"
 
-
+using namespace std;
 NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, UParam& param):
   parent_(parent),
   g_(g),

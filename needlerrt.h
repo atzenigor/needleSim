@@ -7,6 +7,12 @@
 #define MIN_R 0.5  //must be a double
 #define K_CONST 5.0
 
+// boundary of world space
+#define WORLD_BOUND_XY_MAX 1
+#define WORLD_BOUND_XY_MIN -1
+#define WORLD_BOUND_Z_MAX 1
+#define WORLD_BOUND_Z_MIN 0
+
 #include "obstacle.h"
 #include "math.h"
 
@@ -17,7 +23,7 @@ struct Arc{
 
 class Needlerrt{
 private:
-  NeedleTree tree_;
+  NeedleTree _tree;
   bool finished_;
   NVertex *goal_vertex_ptr_;
   Eigen::Vector4d goal_center_;
@@ -39,10 +45,7 @@ public:
   void setGoalArea(Eigen::Vector4d& center,double ray);
   void insertObstacle(Obstacle& obstacle);
 
-  void beginArcIter();
-  bool isArcIterEnd();
-  Arc nextArc();
-
+  NeedleTree &getNeedleTree();
 };
 
 

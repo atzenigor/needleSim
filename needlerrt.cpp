@@ -1,14 +1,7 @@
 #include "needlerrt.h"
 
-
-// boundary of world space
-#define WORLD_BOUND_XY_MAX 1
-#define WORLD_BOUND_XY_MIN -1
-#define WORLD_BOUND_Z_MAX 1
-#define WORLD_BOUND_Z_MIN 0
-
 Needlerrt::Needlerrt():
-  tree_(),
+  _tree(),
   finished_(false),
   goal_vertex_ptr_(NULL),
   goal_center_(),
@@ -34,7 +27,7 @@ void Needlerrt::fillRandom(Eigen::Vector4d& v){
 
 // Find all the reachable vertices that can reach the given random point
 void Needlerrt::fillReachableVertices(const Eigen::Vector4d& random_point, std::vector<NVertex*>& list_of_reachable_vertices){
-  for (std::vector<NVertex*>::iterator it = this->tree_.getListOfVertex().begin() ; it != tree_.getListOfVertex().end(); ++it){
+  for (std::vector<NVertex*>::iterator it = this->_tree.getListOfVertex().begin() ; it != _tree.getListOfVertex().end(); ++it){
       Eigen::Vector4d p = (*it)->getInvTransMatrix() * random_point;
       double squres = pow(p.x(),2)+pow(p.y(),2);
       if( p.z() >= sqrt(2*MIN_R*sqrt(squres)-squres))
@@ -70,13 +63,13 @@ bool Needlerrt::isValidEdge(NVertex* vertex){
   for(double phi = 0; phi < phi_max;phi += phi_step)
     {
       cphi = cos(phi);
-      v<<- r*ctheta*(1-cphi), r*stheta*(1-cphi), r*sin(phi), 1;
+      v << - r*ctheta*(1-cphi), r*stheta*(1-cphi), r*sin(phi), 1;
       for(int i=0;i<list_of_obstacle_.size();i++){
 //          if (list_of_obstacle_[i]->collision(v))
 //            return 0;
         }
     }
-  //if it go out of the for loop it means that no collisions are detected.
+  //if it goes out of the for loop it means that no collisions are detected.
   return 1;
 
 }
@@ -102,7 +95,7 @@ void Needlerrt::makeStep(){
   NVertex* vertex_ptr;
   do
     {
-      while( ! list_of_reachable_vertices.empty());
+      while( list_of_reachable_vertices.empty())
         {
           fillRandom(random_point);
           fillReachableVertices(random_point,list_of_reachable_vertices);
@@ -127,28 +120,15 @@ void Needlerrt::makeStep(){
       vertex_ptr = new NVertex(nearest_neigbor,gwn,u);
     }
   while(! isValidEdge(vertex_ptr));
-  tree_.addNVertex(vertex_ptr);
+  _tree.addNVertex(vertex_ptr);
   if(isGoalVertex(vertex_ptr)){
       finished_ = 1;
       goal_vertex_ptr_ = vertex_ptr;
   }
 }
 
-
-void Needlerrt::beginArcIter(){
-  vertex_it_ = tree_.getListOfVertex().begin() + 1;
+NeedleTree& Needlerrt::getNeedleTree(){
+    return _tree;
 }
 
-bool Needlerrt::isArcIterEnd(){
-  return vertex_it_ == tree_.getListOfVertex().end();
-}
 
-Arc Needlerrt::nextArc(){
-  NVertex *v = *vertex_it_;
-  Arc tmp = {
-    v->getParent()->getPosition(),
-    v->getPosition()
-  };
-  vertex_it_++;
-  return tmp;
-}

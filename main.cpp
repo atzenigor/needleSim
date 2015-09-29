@@ -37,11 +37,14 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+#include "iostream"
 
 #include <QApplication>
 #include <QDesktopWidget>
-
+#include <needlerrt.h>
 #include "window.h"
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {
