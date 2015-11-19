@@ -6,13 +6,14 @@
 
 class Obstacle{
 public:
-    Obstacle(const Eigen::Vector4d &position);
-    Eigen::Vector4d& getPosition();
-  //  bool checkCollision(Eigen::Vector4d point);
-    void draw();
+    Obstacle(const Eigen::Vector4d &center, double size);
+    double getSize();
+    Eigen::Vector4d& getCenter();
 
+  //  bool checkCollision(Eigen::Vector4d point);
 private:
-    Eigen::Vector4d position_;
+    Eigen::Vector4d _center;
+    double _size;
 };
 
 #endif // OBSTACLE_H

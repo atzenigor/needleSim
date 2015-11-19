@@ -48,6 +48,8 @@
 #include <math.h>
 #include <iostream>
 #include <needlerrt.h>
+#include <obstacle.h>
+#include <eigen3/Eigen/Dense>
 class QtLogo;
 
 //! [0]
@@ -83,6 +85,7 @@ protected:
     void resizeGL(int width, int height);
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void wheelEvent(QWheelEvent *event);
 //! [2]
 
 //! [3]
@@ -91,6 +94,7 @@ private:
     int xRot;
     int yRot;
     int zRot;
+    double zoom;
     QPoint lastPos;
     QColor qtGreen;
     QColor qtPurple;

@@ -4,14 +4,17 @@
 
 #include "obstacle.h"
 
-Obstacle::Obstacle(const Eigen::Vector4d& position):
-    position_(position){
+Obstacle::Obstacle(const Eigen::Vector4d& center, double size):
+    _center(center),
+    _size(size){
 }
 
-Eigen::Vector4d& Obstacle::getPosition(){
-    return position_;
+double Obstacle::getSize(){
+    return _size;
 }
-
+Eigen::Vector4d& Obstacle::getCenter(){
+    return _center;
+}
 /*
 bool checkCollision(Eigen::Vector4d point){
     if () return true;
@@ -19,6 +22,4 @@ bool checkCollision(Eigen::Vector4d point){
 }
 */
 
-void draw(){
-}
 

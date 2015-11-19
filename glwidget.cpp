@@ -55,16 +55,27 @@ GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
     logo = 0;
-    xRot = 0;
+    xRot = 32;
     yRot = 0;
     zRot = 0;
+    zoom = 1;
+    Eigen::Vector4d goal_center;
+    goal_center << 0,0,1;
+    double goal_ray = 0.1;
+    needlerrt.setGoalArea(goal_center,goal_ray);
 
+    Eigen::Vector4d center_o1;
+    center_o1 << 0.0,0.0,0.5;
+    double size_o1 = 0.1;
+
+    Obstacle o1(center_o1,size_o1);
+    needlerrt.insertObstacle(o1);
     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateEdges()));
-    timer->start(400);
+    timer->start(100);
 }
 //! [0]
 
@@ -137,13 +148,53 @@ void GLWidget::initializeGL()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+//    glEnable(GL_LIGHTING);
+//    glEnable(GL_LIGHT0);
     glEnable(GL_MULTISAMPLE);
-    static GLfloat lightPosition[4] = { 0.5, 5.0, 7.0, 1.0 };
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+//    static GLfloat lightPosition[4] = { 0.5, 5.0, 7.0, 1.0 };
+//    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 }
-//! [6]
+
+
+void static drawObst(const Eigen::Vector4d& center, double size){
+    glPushMatrix();
+    glTranslatef(center.x(),center.y(),center.z());
+        glScalef(size,size,size);
+        glBegin(GL_QUADS);
+           glColor3f(0.0f,1.0f,0.0f);		  // Set The Color To Green
+           glVertex3f( 1.0f, 1.0f,-1.0f);		  // Top Right Of The Quad (Top)
+           glVertex3f(-1.0f, 1.0f,-1.0f);		  // Top Left Of The Quad (Top)
+           glVertex3f(-1.0f, 1.0f, 1.0f);		  // Bottom Left Of The Quad (Top)
+           glVertex3f( 1.0f, 1.0f, 1.0f);		  // Bottom Right Of The Quad (Top)
+//           glColor3f(1.0f,0.5f,0.0f);		  // Set The Color To Orange
+           glVertex3f( 1.0f,-1.0f, 1.0f);		  // Top Right Of The Quad (Bottom)
+           glVertex3f(-1.0f,-1.0f, 1.0f);		  // Top Left Of The Quad (Bottom)
+           glVertex3f(-1.0f,-1.0f,-1.0f);		  // Bottom Left Of The Quad (Bottom)
+           glVertex3f( 1.0f,-1.0f,-1.0f);		  // Bottom Right Of The Quad (Bottom)
+//           glColor3f(1.0f,0.0f,0.0f);		  // Set The Color To Red
+           glVertex3f( 1.0f, 1.0f, 1.0f);		  // Top Right Of The Quad (Front)
+           glVertex3f(-1.0f, 1.0f, 1.0f);		  // Top Left Of The Quad (Front)
+           glVertex3f(-1.0f,-1.0f, 1.0f);		  // Bottom Left Of The Quad (Front)
+           glVertex3f( 1.0f,-1.0f, 1.0f);		  // Bottom Right Of The Quad (Front)
+//           glColor3f (1.0f,1.0f,0.0f);		  // Set The Color To Yellow
+           glVertex3f( 1.0f,-1.0f,-1.0f);		  // Bottom Left Of The Quad (Back)
+           glVertex3f(-1.0f,-1.0f,-1.0f);		  // Bottom Right Of The Quad (Back)
+           glVertex3f(-1.0f, 1.0f,-1.0f);		  // Top Right Of The Quad (Back)
+           glVertex3f( 1.0f, 1.0f,-1.0f);		  // Top Left Of The Quad (Back)
+//           glColor3f(0.0f,0.0f,1.0f);		  // Set The Color To Blue
+           glVertex3f(-1.0f, 1.0f, 1.0f);		  // Top Right Of The Quad (Left)
+           glVertex3f(-1.0f, 1.0f,-1.0f);		  // Top Left Of The Quad (Left)
+           glVertex3f(-1.0f,-1.0f,-1.0f);		  // Bottom Left Of The Quad (Left)
+           glVertex3f(-1.0f,-1.0f, 1.0f);		  // Bottom Right Of The Quad (Left)
+//           glColor3f(1.0f,0.0f,1.0f);		  // Set The Color To Violet
+           glVertex3f( 1.0f, 1.0f,-1.0f);		  // Top Right Of The Quad (Right)
+           glVertex3f( 1.0f, 1.0f, 1.0f);		  // Top Left Of The Quad (Right)
+           glVertex3f( 1.0f,-1.0f, 1.0f);		  // Bottom Left Of The Quad (Right)
+           glVertex3f( 1.0f,-1.0f,-1.0f);		  // Bottom Right Of The Quad (Right)
+
+         glEnd();
+  glPopMatrix();
+}
 
 //! [7]
 void GLWidget::paintGL()
@@ -156,36 +207,51 @@ void GLWidget::paintGL()
     glRotatef(xRot / 16.0, 1.0, 0.0, 0.0);
     glRotatef(yRot / 16.0, 0.0, 1.0, 0.0);
     glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
+    glScalef(zoom,zoom,zoom);
+    glColor3f(0.0f,1.0f,1.0f);
 
-        glBegin(GL_LINES);
-            glColor3f(1.0f,1.0f,0.0f);
-                std::vector<NVertex*>& verteces = this->needlerrt.getNeedleTree().getListOfVertex();
-                for (int j = 0; j < i; j++){
-                  const Eigen::Vector4d& v1 = verteces[j]->getTransMatrix().col(3);
-                  const Eigen::Vector4d& v2 = verteces[j+1]->getTransMatrix().col(3);
-                  std::cout << "v1 "<<j<< "\n"<< v1 << std::endl;
-                  std::cout << "v2 "<<j<<"\n" << v2 << std::endl;
-                  glVertex3f(v1[0], v1[1], v1[2]);
-                  glVertex3f(v2[0], v2[1], v2[2]);
-                }
+    std::vector<Obstacle>& obstacles = needlerrt.getObstacles();
+    for (uint i=0; i < obstacles.size();i++){
+        double a = obstacles[i].getSize();
+        drawObst(obstacles[i].getCenter(), obstacles[i].getSize());
+    }
+    glColor3f(1.0f,1.0f,0.0f);
+    std::vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
+    for (uint j = 1; j < verteces.size(); j++){
+        glBegin(GL_LINE_STRIP);
+        for(uint i = 0; i< verteces[j]->getDiscretized().size();i++){
+            const Eigen::Vector4d& v= verteces[j]->getDiscretized()[i];
+            glVertex3f(v[0], v[1], v[2]);
+        }
         glEnd();
+    }
+//    glColor3f(0.0f,1.0f,0.0f);
+//    glBegin(GL_LINES);
+//            verteces = this->needlerrt.getNeedleTree().getListOfVertex();
+//            for (int j = 1; j < verteces.size(); j++){
+//              const Eigen::Vector4d& v1 = verteces[j]->getTransMatrix().col(3);
+//              const Eigen::Vector4d& v2 = verteces[j]->getParent()->getTransMatrix().col(3);
+//              glVertex3f(v1[0], v1[1], v1[2]);
+//              glVertex3f(v2[0], v2[1], v2[2]);
+//            }
+//    glEnd();
 }
 //! [7]
 
 //! [8]
 void GLWidget::resizeGL(int width, int height)
 {
-    int side = qMin(width, height);
-    glViewport((width - side) / 2, (height - side) / 2, side, side);
+    glViewport(0,0, width, height);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 #ifdef QT_OPENGL_ES_1
-    glOrthof(-0.5, +0.5, -0.5, +0.5, 4.0, 15.0);
+    glOrthof(-7.12, +7.12, -3.84, +3.84, 4.0, 15.0);
 #else
-    glOrtho(-0.5, +0.5, -0.5, +0.5, 4.0, 15.0);
+    glOrtho(-7.12, +7.12, -3.84, +3.84, 4.0, 15.0);
 #endif
     glMatrixMode(GL_MODELVIEW);
+
 }
 //! [8]
 
@@ -197,11 +263,14 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 //! [9]
 
 //! [10]
+void GLWidget::wheelEvent(QWheelEvent *event){
+  zoom *=(1.0+(event->delta()/120.0)/3.0);
+  updateGL();
+}
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     int dx = event->x() - lastPos.x();
     int dy = event->y() - lastPos.y();
-
     if (event->buttons() & Qt::LeftButton) {
         setXRotation(xRot + 8 * dy);
         setYRotation(yRot + 8 * dx);
@@ -214,7 +283,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::updateEdges()
 {
-    if (i <= 5){
+    if (i < 10000){
         this->needlerrt.makeStep();
         i++;
     }
