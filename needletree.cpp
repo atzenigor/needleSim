@@ -2,6 +2,7 @@
 #include "iostream"
 
 using namespace std;
+
 NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, UParam& param):
   _parent(parent),_g(g),_g_inv(g.inverse()),_param(param){
     if (parent != NULL){
@@ -56,6 +57,7 @@ NeedleTree::~NeedleTree(){
 void NeedleTree::addNVertex(NVertex* v){
   _list_of_vertex.push_back(v);
 }
+
 
 std::vector<NVertex*>& NeedleTree::getListOfVertex(){
   return _list_of_vertex;

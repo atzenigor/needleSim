@@ -40,7 +40,7 @@
 
 #include <QtWidgets>
 #include <QtOpenGL>
-
+#include <QThread>
 
 #include "glwidget.h"
 
@@ -48,9 +48,13 @@
 #define GL_MULTISAMPLE  0x809D
 #endif
 
-int i=0;
+using namespace std;
+using namespace Eigen;
 
-//! [0]
+
+
+
+
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -59,17 +63,24 @@ GLWidget::GLWidget(QWidget *parent)
     yRot = 0;
     zRot = 0;
     zoom = 1;
-    Eigen::Vector4d goal_center;
-    goal_center << 0,0,1;
+
+    Vector4d goal_center;
+    goal_center << 0,0,1,1;
     double goal_ray = 0.1;
     needlerrt.setGoalArea(goal_center,goal_ray);
 
-    Eigen::Vector4d center_o1;
-    center_o1 << 0.0,0.0,0.5;
+    Vector4d center_o1;
+    center_o1 << 0.0,0.0,0.5,1.0;
     double size_o1 = 0.1;
-
     Obstacle o1(center_o1,size_o1);
     needlerrt.insertObstacle(o1);
+
+    Vector4d center_o2;
+    center_o2 << 0.0,0.5,0.5,1.0;
+    double size_o2 = 0.1;
+    Obstacle o2(center_o2,size_o2);
+    needlerrt.insertObstacle(o2);
+
     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
 
@@ -156,12 +167,12 @@ void GLWidget::initializeGL()
 }
 
 
-void static drawObst(const Eigen::Vector4d& center, double size){
+void static drawCube(const Vector4d& center, double size){
     glPushMatrix();
-    glTranslatef(center.x(),center.y(),center.z());
+        glTranslatef(center.x(),center.y(),center.z());
         glScalef(size,size,size);
         glBegin(GL_QUADS);
-           glColor3f(0.0f,1.0f,0.0f);		  // Set The Color To Green
+//           glColor3f(0.0f,1.0f,0.0f);		  // Set The Color To Green
            glVertex3f( 1.0f, 1.0f,-1.0f);		  // Top Right Of The Quad (Top)
            glVertex3f(-1.0f, 1.0f,-1.0f);		  // Top Left Of The Quad (Top)
            glVertex3f(-1.0f, 1.0f, 1.0f);		  // Bottom Left Of The Quad (Top)
@@ -203,38 +214,45 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    glTranslatef(0.0, 0.0, -10.0);
+    glTranslatef(0.0, -3.0, -10.0);
     glRotatef(xRot / 16.0, 1.0, 0.0, 0.0);
     glRotatef(yRot / 16.0, 0.0, 1.0, 0.0);
     glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
     glScalef(zoom,zoom,zoom);
-    glColor3f(0.0f,1.0f,1.0f);
 
-    std::vector<Obstacle>& obstacles = needlerrt.getObstacles();
+    vector<Obstacle> obstacles = needlerrt.getObstacles();
     for (uint i=0; i < obstacles.size();i++){
-        double a = obstacles[i].getSize();
-        drawObst(obstacles[i].getCenter(), obstacles[i].getSize());
+        glColor3f(0.0f,1.0f,0.0f);
+        drawCube(obstacles[i].getCenter(), obstacles[i].getSize());
     }
     glColor3f(1.0f,1.0f,0.0f);
-    std::vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
+    vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
     for (uint j = 1; j < verteces.size(); j++){
         glBegin(GL_LINE_STRIP);
-        for(uint i = 0; i< verteces[j]->getDiscretized().size();i++){
-            const Eigen::Vector4d& v= verteces[j]->getDiscretized()[i];
-            glVertex3f(v[0], v[1], v[2]);
+        const vector<Vector4d> &points=verteces[j]->getDiscretized();
+        for(vector<Vector4d>::const_iterator it = points.begin(); it != points.end(); ++it)
+            glVertex3f((*it)[0], (*it)[1], (*it)[2]);
+        glEnd();
+    }
+
+    if (needlerrt.isFinished()){
+        NVertex * current = needlerrt.getGoalVertex();
+        glColor3f(1.0f,0.0f,0.0f);
+        glBegin(GL_LINE_STRIP);
+        while (current != NULL){
+            const vector<Vector4d> &points=current->getDiscretized();
+            for(vector<Vector4d>::const_iterator it = points.begin(); it != points.end(); ++it)
+                glVertex3f((*it)[0], (*it)[1], (*it)[2]);
+            current = current->getParent();
         }
         glEnd();
     }
-//    glColor3f(0.0f,1.0f,0.0f);
-//    glBegin(GL_LINES);
-//            verteces = this->needlerrt.getNeedleTree().getListOfVertex();
-//            for (int j = 1; j < verteces.size(); j++){
-//              const Eigen::Vector4d& v1 = verteces[j]->getTransMatrix().col(3);
-//              const Eigen::Vector4d& v2 = verteces[j]->getParent()->getTransMatrix().col(3);
-//              glVertex3f(v1[0], v1[1], v1[2]);
-//              glVertex3f(v2[0], v2[1], v2[2]);
-//            }
-//    glEnd();
+
+    // draw the goal area
+    glColor3f(1.0f,0.0f,0.0f);
+    drawCube(needlerrt.getCenterGoalArea(), needlerrt.getSizeGoalArea());
+
+
 }
 //! [7]
 
@@ -283,10 +301,9 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::updateEdges()
 {
-    if (i < 10000){
+    if (! needlerrt.isFinished())
         this->needlerrt.makeStep();
-        i++;
-    }
+
     updateGL();
 }
 

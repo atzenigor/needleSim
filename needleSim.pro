@@ -15,4 +15,4 @@ HEADERS += \
     obstacle.h \
     needlerrt.h
 
-QT           += opengl widgets
+QT           += opengl widgets core

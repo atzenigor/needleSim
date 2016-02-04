@@ -4,13 +4,14 @@
 #include <eigen3/Eigen/Dense>
 #include <vector>
 
+#define MARGINE 0.1
 class Obstacle{
 public:
-    Obstacle(const Eigen::Vector4d &center, double size);
+    Obstacle(Eigen::Vector4d center, double size);
     double getSize();
     Eigen::Vector4d& getCenter();
 
-  //  bool checkCollision(Eigen::Vector4d point);
+    bool contains(Eigen::Vector4d point);
 private:
     Eigen::Vector4d _center;
     double _size;

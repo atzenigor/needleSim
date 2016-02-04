@@ -4,7 +4,8 @@
 
 #include "obstacle.h"
 
-Obstacle::Obstacle(const Eigen::Vector4d& center, double size):
+using namespace Eigen;
+Obstacle::Obstacle(Vector4d center, double size):
     _center(center),
     _size(size){
 }
@@ -12,14 +13,15 @@ Obstacle::Obstacle(const Eigen::Vector4d& center, double size):
 double Obstacle::getSize(){
     return _size;
 }
-Eigen::Vector4d& Obstacle::getCenter(){
+Vector4d& Obstacle::getCenter(){
     return _center;
 }
-/*
-bool checkCollision(Eigen::Vector4d point){
-    if () return true;
+
+bool Obstacle::contains(Vector4d point){
+    if ( ((point - _center).array().abs() < (_size + MARGINE)).all() )
+        return true;
     else return false;
 }
-*/
+
 
 
