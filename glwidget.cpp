@@ -52,17 +52,16 @@ using namespace std;
 using namespace Eigen;
 
 
-
-
-
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
     logo = 0;
-    xRot = 32;
+    xRot = 0;
     yRot = 0;
     zRot = 0;
-    zoom = 1;
+    zoom = 4;
+
+    niteration = 0;
 
     Vector4d goal_center;
     goal_center << 0,0,1,1;
@@ -71,7 +70,7 @@ GLWidget::GLWidget(QWidget *parent)
 
     Vector4d center_o1;
     center_o1 << 0.0,0.0,0.5,1.0;
-    double size_o1 = 0.1;
+    double size_o1 = 0.05;
     Obstacle o1(center_o1,size_o1);
     needlerrt.insertObstacle(o1);
 
@@ -86,7 +85,7 @@ GLWidget::GLWidget(QWidget *parent)
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateEdges()));
-    timer->start(100);
+    timer->start(50);
 }
 //! [0]
 
@@ -225,26 +224,31 @@ void GLWidget::paintGL()
         glColor3f(0.0f,1.0f,0.0f);
         drawCube(obstacles[i].getCenter(), obstacles[i].getSize());
     }
-    glColor3f(1.0f,1.0f,0.0f);
+//    Vector4d v;
+//    v << PX, PY, PZ, 1;
+//    drawCube(v,0.01);
+
     vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
+    set<NVertex*> colored_verteces;
+
+    if (needlerrt.isFinished()){
+        NVertex * current = needlerrt.getGoalVertex();
+        colored_verteces.insert(current);
+        while(current != NULL){
+            current = current->getParent();
+            colored_verteces.insert(current);
+        }
+    }
+
     for (uint j = 1; j < verteces.size(); j++){
+        if (needlerrt.isFinished() && colored_verteces.find(verteces[j]) != colored_verteces.end())
+            glColor3f(1.0f,0.0f,0.0f);
+        else
+            glColor3f(1.0f,1.0f,0.0f);
         glBegin(GL_LINE_STRIP);
         const vector<Vector4d> &points=verteces[j]->getDiscretized();
         for(vector<Vector4d>::const_iterator it = points.begin(); it != points.end(); ++it)
             glVertex3f((*it)[0], (*it)[1], (*it)[2]);
-        glEnd();
-    }
-
-    if (needlerrt.isFinished()){
-        NVertex * current = needlerrt.getGoalVertex();
-        glColor3f(1.0f,0.0f,0.0f);
-        glBegin(GL_LINE_STRIP);
-        while (current != NULL){
-            const vector<Vector4d> &points=current->getDiscretized();
-            for(vector<Vector4d>::const_iterator it = points.begin(); it != points.end(); ++it)
-                glVertex3f((*it)[0], (*it)[1], (*it)[2]);
-            current = current->getParent();
-        }
         glEnd();
     }
 
@@ -301,8 +305,13 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::updateEdges()
 {
-    if (! needlerrt.isFinished())
-        this->needlerrt.makeStep();
+    if (! needlerrt.isFinished()){
+        for(int i=0;i<ITER_PER_VISUALIZ;i++){
+            this->needlerrt.makeStep();
+            this->niteration++;
+        }
+        cout << this->niteration<< endl;
+    }
 
     updateGL();
 }

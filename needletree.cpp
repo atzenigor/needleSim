@@ -50,6 +50,7 @@ NeedleTree::NeedleTree():
   _first_vertex = new NVertex(NULL,Eigen::Matrix4d::Identity(),a);
   this->addNVertex(_first_vertex);
 }
+
 NeedleTree::~NeedleTree(){
   this->_list_of_vertex.clear();
 }

@@ -33,7 +33,6 @@ public:
   const Eigen::Matrix4d &getInvTransMatrix();
   const Eigen::Vector4d getPosition();
   const UParam getParam();
-
 };
 
 class NeedleTree{

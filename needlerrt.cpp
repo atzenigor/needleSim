@@ -1,8 +1,27 @@
 #include "needlerrt.h"
 
-
 using namespace std;
 using namespace Eigen;
+
+RandomManager::RandomManager(Eigen::Vector4d center, double variance):
+    _variance(variance),
+    _gen(std::random_device{}()),
+    _disx(center[0],variance),
+    _disy(center[1],variance),
+    _disz(center[2],variance)
+
+{}
+
+double RandomManager::get_random_x(){
+    return _disx(_gen);
+}
+double RandomManager::get_random_y(){
+    return _disy(_gen);
+}
+double RandomManager::get_random_z(){
+    return _disz(_gen);
+}
+
 
 Needlerrt::Needlerrt():
   _tree(),
@@ -10,9 +29,9 @@ Needlerrt::Needlerrt():
   _goal_vertex_ptr(NULL),
   _goal_center(),
   _goal_ray_squared(0.0),
-  _list_of_obstacles(),
-  _vertex_it(NULL){
-}
+  _list_of_obstacles()
+{}
+
 void Needlerrt::insertObstacle(Obstacle& o){
     _list_of_obstacles.push_back(o);
 }
@@ -24,6 +43,7 @@ const vector<Obstacle>& Needlerrt::getObstacles(){
 //Clears the list of obstacle
 Needlerrt::~Needlerrt(){
   _list_of_obstacles.clear();
+  delete _rm;
 }
 
 
@@ -37,19 +57,20 @@ Vector4d Needlerrt::getRandomPoint(){
       v << disxy(gen),disxy(gen),disz(gen),1;
       return v;
 }
+
 Vector4d Needlerrt::getRandomPointGoalBiased(){
-    while(true){
-      random_device rd;
-      double variance = BOUND_XY;
-      mt19937 gen(rd());
-      normal_distribution<> disx(_goal_center[0],variance * 1.1);
-      normal_distribution<> disy(_goal_center[2],variance * 1.1);
-      normal_distribution<> disz(_goal_center[3],variance * 1.1);
-      Vector4d v;
-      v << disx(gen),disy(gen),disz(gen),1;
-      if (v[0]< BOUND_XY && v[0] >-BOUND_XY && v[1]< BOUND_XY && v[1] >-BOUND_XY && v[2]< BOUND_Z_MAX && v[2] >-BOUND_Z_MIN)
-        return v;
-    }
+  Vector4d v;
+  v << _rm->get_random_x(), _rm->get_random_y(), _rm->get_random_z(),1;
+  while(v[0] > BOUND_XY || v[0] < -BOUND_XY)
+      v[0] = _rm->get_random_x();
+  while(v[1] > BOUND_XY || v[1] < -BOUND_XY)
+      v[1] = _rm->get_random_y();
+  while(v[2] > BOUND_Z_MAX || v[2] < -BOUND_Z_MIN)
+      v[2] = _rm->get_random_z();
+
+//  v << PX, PY, PZ, 1;
+
+  return v;
 }
 
 // Find all the reachable vertices that can reach the given random point
@@ -57,9 +78,10 @@ void Needlerrt::getReachable(const Vector4d& random_point, vector<NVertex*>& lis
   list_of_reachable_vertices.clear();
   for (vector<NVertex*>::iterator it = this->_tree.getListOfVertex().begin() ; it != _tree.getListOfVertex().end(); ++it){
       Vector4d p = (*it)->getInvTransMatrix() * random_point;
-      double squres = pow(p.x(),2)+pow(p.y(),2);
-      if( p.z() >= sqrt(2*MIN_R*sqrt(squres)-squres))
-        list_of_reachable_vertices.push_back(*it);
+      double squres = pow(p[0],2)+pow(p[1],2);
+//      if(p.z() >= sqrt(2*MIN_R*sqrt(squres)-squres))
+      if(pow(p.z(), 2) >= 2*MIN_R*sqrt(squres)-squres)
+          list_of_reachable_vertices.push_back(*it);
     }
 }
 
@@ -69,7 +91,7 @@ NVertex* Needlerrt::nearestNeigbor(vector<NVertex*>& reachable, Vector4d& point)
   NVertex* curr_near_vertex = reachable[0];
   for (vector<NVertex*>::iterator it = reachable.begin()+1 ; it != reachable.end(); ++it){
       new_norm = ((*it)->getPosition() - point).squaredNorm();
-      if( norm < new_norm){
+      if( norm > new_norm){
         norm = new_norm;
         curr_near_vertex = *it;
       }
@@ -98,6 +120,8 @@ void Needlerrt::setGoalArea(Vector4d center, double ray){
   _goal_center= center;
   _goal_ray = ray;
   _goal_ray_squared= ray * ray;
+
+  _rm = new RandomManager(center, VARIANCE);
 }
 double Needlerrt::getSizeGoalArea(){
     return _goal_ray;
@@ -132,10 +156,11 @@ void Needlerrt::makeStep(){
       u.theta = atan2(p.y(),p.x());
       double stheta =  sin(u.theta);
       double ctheta =  cos(u.theta);
-      u.r = (pow(p.y(),2) +  pow(p.z()*stheta,2))/(2*stheta);
-      double phi = atan2(K_CONST * p.z(),1-(K_CONST * p.y()/stheta));
-      if (u.r < 0)
-          u.r = -u.r;
+      double px2 = pow(p.x(),2);
+      double py2 = pow(p.y(),2);
+      double pz2 = pow(p.z(),2);
+      u.r = (px2 + py2 + pz2) / (2*sqrt(px2+py2));
+      double phi = atan2(p.z(),u.r-sqrt(px2+py2));
       double cphi = cos(phi);
       double sphi = sin(phi);
       u.l = u.r * phi;

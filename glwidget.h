@@ -42,6 +42,7 @@
 #define GLWIDGET_H
 
 #include <QGLWidget>
+#include <set>
 
 #include <QWidget>
 #include <QtGui>
@@ -50,6 +51,8 @@
 #include <needlerrt.h>
 #include <obstacle.h>
 #include <eigen3/Eigen/Dense>
+
+#define ITER_PER_VISUALIZ 1
 class QtLogo;
 
 //! [0]
@@ -94,6 +97,7 @@ private:
     int xRot;
     int yRot;
     int zRot;
+    int niteration;
     double zoom;
     QPoint lastPos;
     QColor qtGreen;

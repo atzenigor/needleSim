@@ -1,22 +1,39 @@
 #ifndef NEEDLERRT_H
 #define NEEDLERRT_H
+
+//#define PX 0.83
+//#define PY 0.15
+//#define PZ 0.53
+
+#define BOUND_XY 2.0 // the min is -BOUND_XY
+#define BOUND_Z_MAX 2.0
+#define BOUND_Z_MIN 0.0
+#define MIN_R 0.05  //must be double
+#define K_CONST 0.2
+#define VARIANCE BOUND_XY //the variance for the random variable that tunes the bias towards the goal.
+
+#define _USE_MATH_DEFINES
+
 #include "needletree.h"
 #include "obstacle.h"
 #include "eigen3/Eigen/Dense"
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <iostream>
+#include <random>
+#include <cmath>
 
-#define MIN_R 0.05  //must be double
-#define K_CONST 0.2
-
-// boundary of world space
-#define BOUND_XY 2.0
-#define BOUND_Z_MAX 2.0
-#define BOUND_Z_MIN 0.0
-#define SAMPLING_BIAS 2  // 1 the boundary and the variance coincide, the graither the more bias
-
-#include "obstacle.h"
-#include "math.h"
+class RandomManager{
+private:
+    double _variance;
+    std::mt19937 _gen;
+    std::normal_distribution<> _disx;
+    std::normal_distribution<> _disy;
+    std::normal_distribution<> _disz;
+public:
+    RandomManager(Eigen::Vector4d center, double variance);
+    double get_random_x();
+    double get_random_y();
+    double get_random_z();
+};
 
 class Needlerrt{
 private:
@@ -26,9 +43,8 @@ private:
   Eigen::Vector4d _goal_center;
   double _goal_ray_squared;
   double _goal_ray;
+  RandomManager * _rm;  // it is initialized when setGoalArea(..) is called
   std::vector<Obstacle> _list_of_obstacles;
-  std::vector<NVertex*>::iterator _vertex_it;
-
   Eigen::Vector4d getRandomPoint();
   Eigen::Vector4d getRandomPointGoalBiased();
   void getReachable(const Eigen::Vector4d& random_point, std::vector<NVertex*>& list_of_reachable_vertices);
