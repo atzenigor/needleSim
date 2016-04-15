@@ -93,6 +93,7 @@ protected:
 
 //! [3]
 private:
+    QTimer *timer;
     QtLogo *logo;
     int xRot;
     int yRot;

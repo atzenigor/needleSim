@@ -83,7 +83,7 @@ GLWidget::GLWidget(QWidget *parent)
     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
 
-    QTimer *timer = new QTimer(this);
+    timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateEdges()));
     timer->start(50);
 }
@@ -224,9 +224,9 @@ void GLWidget::paintGL()
         glColor3f(0.0f,1.0f,0.0f);
         drawCube(obstacles[i].getCenter(), obstacles[i].getSize());
     }
-//    Vector4d v;
-//    v << PX, PY, PZ, 1;
-//    drawCube(v,0.01);
+    Vector4d v;
+    v << needlerrt.px, needlerrt.py, needlerrt.pz, 1;
+    drawCube(v,0.01);
 
     vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
     set<NVertex*> colored_verteces;
@@ -280,6 +280,12 @@ void GLWidget::resizeGL(int width, int height)
 //! [9]
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
+    if (event->buttons() & Qt::MidButton) {
+        if (this->timer->isActive())
+            this->timer->stop();
+        else
+            this->timer->start();
+    }
     lastPos = event->pos();
 }
 //! [9]
@@ -314,6 +320,7 @@ void GLWidget::updateEdges()
     }
 
     updateGL();
+
 }
 
 //! [10]

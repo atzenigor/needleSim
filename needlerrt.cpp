@@ -3,6 +3,8 @@
 using namespace std;
 using namespace Eigen;
 
+
+
 RandomManager::RandomManager(Eigen::Vector4d center, double variance):
     _variance(variance),
     _gen(std::random_device{}()),
@@ -68,7 +70,9 @@ Vector4d Needlerrt::getRandomPointGoalBiased(){
   while(v[2] > BOUND_Z_MAX || v[2] < -BOUND_Z_MIN)
       v[2] = _rm->get_random_z();
 
-//  v << PX, PY, PZ, 1;
+  px = v[0];
+  py = v[1];
+  pz = v[2];
 
   return v;
 }
@@ -163,12 +167,19 @@ void Needlerrt::makeStep(){
       double phi = atan2(p.z(),u.r-sqrt(px2+py2));
       double cphi = cos(phi);
       double sphi = sin(phi);
+      if (phi < 0){
+          phi += 2 * M_PI;
+      }
       u.l = u.r * phi;
 
       g<<-stheta, -ctheta*cphi, ctheta*sphi, u.r*ctheta*(1-cphi),
           ctheta, -stheta*cphi, stheta*sphi , u.r*stheta*(1-cphi),
                0,         sphi,        cphi,            u.r*sphi,
                0,            0,           0,                   1;
+//      g<< ctheta, -stheta*cphi, -stheta*sphi, u.r*ctheta*(1-cphi),
+//          stheta,  ctheta*cphi, -ctheta*sphi , u.r*stheta*(1-cphi),
+//               0,         sphi,        cphi,            u.r*sphi,
+//               0,            0,           0,                   1;
       gwn = nearest_neigbor->getTransMatrix()*g;
       vertex_ptr = new NVertex(nearest_neigbor,gwn,u);
   }

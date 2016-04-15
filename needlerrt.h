@@ -8,9 +8,8 @@
 #define BOUND_XY 2.0 // the min is -BOUND_XY
 #define BOUND_Z_MAX 2.0
 #define BOUND_Z_MIN 0.0
-#define MIN_R 0.05  //must be double
-#define K_CONST 0.2
-#define VARIANCE BOUND_XY //the variance for the random variable that tunes the bias towards the goal.
+#define MIN_R 0.15  //must be double
+#define VARIANCE BOUND_XY *0.1 //the variance for the random variable that tunes the bias towards the goal.
 
 #define _USE_MATH_DEFINES
 
@@ -53,6 +52,7 @@ private:
   bool isGoalVertex(NVertex *vertex);
 
 public:
+      double px,py,pz;
   Needlerrt();
   ~Needlerrt();
   void makeStep();
