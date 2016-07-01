@@ -53,6 +53,9 @@
 #include <eigen3/Eigen/Dense>
 
 #define ITER_PER_VISUALIZ 1
+#define MAX_ITERATION_BESTPATH 10
+
+
 class QtLogo;
 
 //! [0]
@@ -84,11 +87,13 @@ signals:
 //! [2]
 protected:
     void initializeGL();
+    void initializeNeedlerrt();
     void paintGL();
     void resizeGL(int width, int height);
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
+    void keyPressEvent(QKeyEvent* event );
 //! [2]
 
 //! [3]
@@ -98,13 +103,16 @@ private:
     int xRot;
     int yRot;
     int zRot;
-    int niteration;
     double zoom;
     QPoint lastPos;
     QColor qtGreen;
     QColor qtPurple;
 
-    Needlerrt needlerrt;
+    int iter_numb_bestpath = 0;
+    bool pause;
+
+    Needlerrt *needlerrt;
+    Needlerrt *best_needlerrt;
 
 };
 

@@ -27,6 +27,7 @@ private:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   NVertex(NVertex * parent, const Eigen::Matrix4d &g, UParam& param);
+  ~NVertex();
   NVertex * getParent();
   const std::vector<Eigen::Vector4d>& getDiscretized();
   const Eigen::Matrix4d &getTransMatrix();

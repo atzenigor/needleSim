@@ -41,7 +41,7 @@
 #include <QtWidgets>
 #include <QtOpenGL>
 #include <QThread>
-
+#include <iostream>
 #include "glwidget.h"
 
 #ifndef GL_MULTISAMPLE
@@ -51,6 +51,26 @@
 using namespace std;
 using namespace Eigen;
 
+void GLWidget::initializeNeedlerrt(){
+    needlerrt = new Needlerrt;
+
+    Vector4d goal_center;
+    goal_center << 0,0,1,1;
+    double goal_ray = 0.075;
+    needlerrt->setGoalArea(goal_center,goal_ray);
+
+    Vector4d center_o1;
+    center_o1 << 0.0,0.0,0.5,1.0;
+    double size_o1 = 0.15;
+    Obstacle o1(center_o1,size_o1);
+    needlerrt->insertObstacle(o1);
+
+    Vector4d center_o2;
+    center_o2 << 0.0,0.56,0.56,1.0;
+    double size_o2 = 0.1;
+    Obstacle o2(center_o2,size_o2);
+    needlerrt->insertObstacle(o2);
+}
 
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
@@ -61,27 +81,14 @@ GLWidget::GLWidget(QWidget *parent)
     zRot = 0;
     zoom = 4;
 
-    niteration = 0;
+    initializeNeedlerrt();
 
-    Vector4d goal_center;
-    goal_center << 0,0,1,1;
-    double goal_ray = 0.1;
-    needlerrt.setGoalArea(goal_center,goal_ray);
-
-    Vector4d center_o1;
-    center_o1 << 0.0,0.0,0.5,1.0;
-    double size_o1 = 0.05;
-    Obstacle o1(center_o1,size_o1);
-    needlerrt.insertObstacle(o1);
-
-    Vector4d center_o2;
-    center_o2 << 0.0,0.5,0.5,1.0;
-    double size_o2 = 0.1;
-    Obstacle o2(center_o2,size_o2);
-    needlerrt.insertObstacle(o2);
+    best_needlerrt = needlerrt;
 
     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
+
+    this->grabKeyboard();
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateEdges()));
@@ -205,7 +212,6 @@ void static drawCube(const Vector4d& center, double size){
          glEnd();
   glPopMatrix();
 }
-
 //! [7]
 void GLWidget::paintGL()
 {
@@ -219,20 +225,20 @@ void GLWidget::paintGL()
     glRotatef(zRot / 16.0, 0.0, 0.0, 1.0);
     glScalef(zoom,zoom,zoom);
 
-    vector<Obstacle> obstacles = needlerrt.getObstacles();
+    vector<Obstacle> obstacles = (*needlerrt).getObstacles();
     for (uint i=0; i < obstacles.size();i++){
         glColor3f(0.0f,1.0f,0.0f);
         drawCube(obstacles[i].getCenter(), obstacles[i].getSize());
     }
     Vector4d v;
-    v << needlerrt.px, needlerrt.py, needlerrt.pz, 1;
+    v << (*needlerrt).px, (*needlerrt).py, (*needlerrt).pz, 1;
     drawCube(v,0.01);
 
-    vector<NVertex*>& verteces = needlerrt.getNeedleTree().getListOfVertex();
+    vector<NVertex*>& verteces = (*needlerrt).getNeedleTree().getListOfVertex();
     set<NVertex*> colored_verteces;
 
-    if (needlerrt.isFinished()){
-        NVertex * current = needlerrt.getGoalVertex();
+    if (needlerrt->isFinished()){
+        NVertex * current = (*needlerrt).getGoalVertex();
         colored_verteces.insert(current);
         while(current != NULL){
             current = current->getParent();
@@ -241,7 +247,7 @@ void GLWidget::paintGL()
     }
 
     for (uint j = 1; j < verteces.size(); j++){
-        if (needlerrt.isFinished() && colored_verteces.find(verteces[j]) != colored_verteces.end())
+        if ((*needlerrt).isFinished() && colored_verteces.find(verteces[j]) != colored_verteces.end())
             glColor3f(1.0f,0.0f,0.0f);
         else
             glColor3f(1.0f,1.0f,0.0f);
@@ -254,7 +260,7 @@ void GLWidget::paintGL()
 
     // draw the goal area
     glColor3f(1.0f,0.0f,0.0f);
-    drawCube(needlerrt.getCenterGoalArea(), needlerrt.getSizeGoalArea());
+    drawCube((*needlerrt).getCenterGoalArea(), (*needlerrt).getSizeGoalArea());
 
 
 }
@@ -295,6 +301,24 @@ void GLWidget::wheelEvent(QWheelEvent *event){
   zoom *=(1.0+(event->delta()/120.0)/3.0);
   updateGL();
 }
+
+void GLWidget::keyPressEvent( QKeyEvent* event ) {
+    switch ( event->key() ) {
+        case Qt::Key_P:
+            if (pause)
+                std::cout << "p";
+            else
+                pause = true;
+            break;
+        case Qt::Key_Y:
+            //act on 'Y'
+            break;
+        default:
+            event->ignore();
+            break;
+        }
+}
+
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     int dx = event->x() - lastPos.x();
@@ -311,14 +335,37 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::updateEdges()
 {
-    if (! needlerrt.isFinished()){
-        for(int i=0;i<ITER_PER_VISUALIZ;i++){
-            this->needlerrt.makeStep();
-            this->niteration++;
+//    if (pause)
+//        return;
+//    while (! needlerrt->isFinished())
+//        needlerrt->makeStep();
+    if (! needlerrt->isFinished()){
+        for(int i=0;i<ITER_PER_VISUALIZ;i++)
+            needlerrt->makeStep();
+        if(needlerrt->isFinished()){
+            this->timer->setInterval(1500);
         }
-        cout << this->niteration<< endl;
     }
+    else
+    { //needlerrt finished!
+        if (iter_numb_bestpath < MAX_ITERATION_BESTPATH ){
+            this->timer->setInterval(50);
 
+
+            if (needlerrt == best_needlerrt){
+                iter_numb_bestpath++;
+            }
+            else if (needlerrt->getPathLength() < best_needlerrt->getPathLength()){ // current better than best
+                delete best_needlerrt;
+                best_needlerrt = needlerrt;
+            }
+            else delete needlerrt;
+
+            initializeNeedlerrt();
+            iter_numb_bestpath++;
+        }
+        else needlerrt = best_needlerrt;
+    }
     updateGL();
 
 }

@@ -5,11 +5,11 @@
 //#define PY 0.15
 //#define PZ 0.53
 
-#define BOUND_XY 2.0 // the min is -BOUND_XY
-#define BOUND_Z_MAX 2.0
+#define BOUND_XY 1.0 // the min is -BOUND_XY
+#define BOUND_Z_MAX 1.0
 #define BOUND_Z_MIN 0.0
 #define MIN_R 0.15  //must be double
-#define VARIANCE BOUND_XY *0.1 //the variance for the random variable that tunes the bias towards the goal.
+#define VARIANCE 0.2 //the variance for the random variable that tunes the bias towards the goal.
 
 #define _USE_MATH_DEFINES
 
@@ -36,14 +36,23 @@ public:
 
 class Needlerrt{
 private:
+    float bound_xy = 1.0; // the min is -BOUND_XY
+    float bound_z_max = 1.0;
+    float bound_z_min = 0.0;
+    float min_r = 0.15;  //must be double
+    float variance; //the variance for the random variable that tunes the bias towards the goal.
+
+
   NeedleTree _tree;
   bool _finished;
   NVertex *_goal_vertex_ptr;
   Eigen::Vector4d _goal_center;
   double _goal_ray_squared;
   double _goal_ray;
+  float path_length = -1;
   RandomManager * _rm;  // it is initialized when setGoalArea(..) is called
   std::vector<Obstacle> _list_of_obstacles;
+
   Eigen::Vector4d getRandomPoint();
   Eigen::Vector4d getRandomPointGoalBiased();
   void getReachable(const Eigen::Vector4d& random_point, std::vector<NVertex*>& list_of_reachable_vertices);
@@ -52,7 +61,8 @@ private:
   bool isGoalVertex(NVertex *vertex);
 
 public:
-      double px,py,pz;
+  double px,py,pz;
+
   Needlerrt();
   ~Needlerrt();
   void makeStep();
@@ -61,10 +71,12 @@ public:
   double getSizeGoalArea();
   const Eigen::Vector4d& getCenterGoalArea();
 
-  void insertObstacle(Obstacle& obstacle);
+  void insertObstacle(Obstacle obstacle);
   const std::vector<Obstacle>& getObstacles();
   NVertex *getGoalVertex();
   NeedleTree &getNeedleTree();
+
+  float getPathLength();
 };
 
 

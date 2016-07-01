@@ -34,7 +34,7 @@ Needlerrt::Needlerrt():
   _list_of_obstacles()
 {}
 
-void Needlerrt::insertObstacle(Obstacle& o){
+void Needlerrt::insertObstacle(Obstacle o){
     _list_of_obstacles.push_back(o);
 }
 
@@ -189,6 +189,25 @@ void Needlerrt::makeStep(){
   if(isGoalVertex(vertex_ptr)){
       _finished = 1;
       this->_goal_vertex_ptr = vertex_ptr;
+
+      path_length = 0.0;
+      NVertex *current = vertex_ptr;
+      do {
+          for(vector<Vector4d>::const_iterator it = current->getDiscretized().begin();
+              it != current->getDiscretized().end() && it+1 != current->getDiscretized().end();
+              ++it){
+              Vector4d a = *it;
+              Vector4d b = *(it + 1);
+              path_length += (a-b).norm();
+              std::cout << "a: \n"<< a << std::endl;
+              std::cout << "b: \n"<< b <<std::endl;
+              std::cout << "p: "<<path_length<< std::endl;
+
+          }
+          current = current->getParent();
+      }
+      while(current != NULL);
+      std::cout << "path length: "<<path_length<< std::endl;
   }
 }
 bool Needlerrt::isFinished(){
@@ -201,6 +220,11 @@ NVertex *Needlerrt::getGoalVertex(){
 
 NeedleTree& Needlerrt::getNeedleTree(){
     return _tree;
+}
+
+// call it only if the rrt is finished, otherwise it returns -1
+float Needlerrt::getPathLength(){
+    return path_length;
 }
 
 

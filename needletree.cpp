@@ -20,6 +20,9 @@ NVertex::NVertex(NVertex* parent, const Eigen::Matrix4d& g, UParam& param):
         }
     }
 }
+NVertex::~NVertex(){
+    _discretized.clear();
+}
 
 const UParam NVertex::getParam(){
   return _param;
@@ -52,6 +55,8 @@ NeedleTree::NeedleTree():
 }
 
 NeedleTree::~NeedleTree(){
+    for (NVertex* nv : _list_of_vertex)
+        delete nv;
   this->_list_of_vertex.clear();
 }
 
